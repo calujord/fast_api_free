@@ -1,4 +1,5 @@
 # database.py
+from unittest.mock import Base
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -22,7 +23,8 @@ class MainApi(FastAPI):
         engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
         self.session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
         self.db = declarative_base()
-        self.db.metadata.create_all(bind=engine)
+        Base.metadata.create_all(bind=engine)
+        
         
 
     def add_controllers(self, controllers: list[Type[Controller]]):
