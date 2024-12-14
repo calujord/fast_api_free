@@ -1,17 +1,14 @@
 # database.py
-from unittest.mock import Base
+
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from typing import Type
 from fastapi import FastAPI
 from sqlalchemy import create_engine
+from infrastructure.database.settings import BaseModelEntity
 
-from api.controllers.base import Controller
-from alembic.config import Config
-from alembic import command
-
-
+from core.controller import Controller
 
 class MainApi(FastAPI):
     controllers: list[Type[Controller]] = []
@@ -23,7 +20,7 @@ class MainApi(FastAPI):
         engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
         self.session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
         self.db = declarative_base()
-        Base.metadata.create_all(bind=engine)
+        BaseModelEntity.metadata.create_all(bind=engine)
         
         
 
@@ -38,14 +35,9 @@ class MainApi(FastAPI):
 
         for controller_type in self.controllers:
             controller = controller_type()
-            controller.session = self.session_local
-            print(f"\033[92mController {self.session_local.__class__} \033[0m")
-            print(f"\033[92mController {controller.__class__} \033[0m]")
-            # for attr_name in dir(controller):
-            #     attr = getattr(controller, attr_name)
-            #     if callable(attr) and hasattr(attr, "_path"):
-            #         method = getattr(controller.router, attr._methods[0].lower())
-            #         method(attr._path)(attr)
+            controller.session = self.session_local()
+            controller._register_routes()
+            
             self.include_router(
                 controller.router, 
                 prefix=controller.prefix, 

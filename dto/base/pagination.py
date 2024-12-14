@@ -12,8 +12,8 @@ from domain.domain_base import BaseDomain
 from infrastructure.entities.base import BaseEntity
 
 class FilterBase(pydantic.BaseModel):
-    page: int
-    limit: int
+    page: int = pydantic.Field(1, description="Page number", example=1)
+    limit: int = pydantic.Field(10, description="Items per page", example=10)
     search: Optional[str] = None
 
 

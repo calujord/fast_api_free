@@ -1,16 +1,15 @@
 from sqlalchemy import Column, String
 from infrastructure.entities.base import BaseEntity
-
-class GroupEntity(BaseEntity):
+from infrastructure.database.settings import BaseModelEntity
+class GroupEntity(BaseModelEntity, BaseEntity):
     __tablename__ = 'groups'
 
-    name = Column(String, unique=True, index=True, nullable=False)
+    name = Column(String, index=True, nullable=False)
     description = Column(String, nullable=False)
-
-    def __repr__(self):
-        return f"<Group(name={self.name}, description={self.description})>"
     
     class Config:
         from_attributes = True
         
         
+    def __repr__(self):
+        return f"<Group(name={self.name}, description={self.description})>"

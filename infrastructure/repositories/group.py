@@ -1,21 +1,43 @@
+from dataclasses import dataclass
+import datetime
+
+from sqlalchemy.orm import Query
 from dto.base.pagination import FilterBase, PaginationResponse
 from dto.group.group_input import GroupInput
 from dto.group.group_pick import GroupPick
+from infrastructure.entities.base import BaseEntity
 from infrastructure.entities.group import GroupEntity
 from sqlalchemy.orm import Session
 
 from sqlalchemy import or_
 
-class GroupRepository:
-    def __init__(self, session: Session):
-        self.session = session
+class SuperQuery(Query):
+    
+    # override filter and only active
+    def __get__(self, instance, owner):
+        return Query.__get__(self, instance, owner).filter(BaseEntity.deleted_at == None)
+    
+    
+    
 
-    def browse(self, filter: FilterBase) -> PaginationResponse[GroupEntity]:
-        query = self.session.query(GroupEntity)
+@dataclass
+class GroupRepository:
+    db: Session
+    
+    def browse(self, filter: FilterBase) -> PaginationResponse:
+        query = self.db.query(GroupEntity)
 
         if filter.search:
             search = f"%{filter.search}%"
-            query = query.filter(or_(GroupEntity.name.ilike(search), GroupEntity.description.ilike(search)))
+            query = query.filter(
+                or_(
+                    GroupEntity.name.ilike(search),
+                    GroupEntity.description.ilike(search)
+                ),
+                GroupEntity.deleted_at == None
+                # active
+                
+            )
 
         total = query.count()
 
@@ -31,7 +53,7 @@ class GroupRepository:
             limit=filter.limit
         )
     
-    def read(self, data: GroupPick) -> GroupEntity:
+    def read(self, id: int) -> GroupEntity:
         """
         Retrieve a group by its ID.
         Args:
@@ -42,12 +64,12 @@ class GroupRepository:
             ValueError: If no group with the specified ID is found.
         """
         
-        group = self.session.query(GroupEntity).filter(GroupEntity.id == data.id).first()
+        group = self.db.query(GroupEntity).filter(GroupEntity.id == id, GroupEntity.deleted_at == None).first()
         if group is None:
-            raise ValueError(f"Group with id {data.id} not found")
+            raise ValueError(f"Group with id {id} not found")
         return group
 
-    def edit(self, data: GroupPick, group: GroupInput) -> GroupEntity:
+    def edit(self, id: int, group: GroupInput) -> GroupEntity:
         """
         Edit an existing group with the provided data.
         Args:
@@ -58,19 +80,27 @@ class GroupRepository:
             Group: The updated group object.
         """
         
-        _group = self.session.query(GroupEntity).filter(GroupEntity.id == data.id).first()
+        _group = self.db.query(GroupEntity).filter(GroupEntity.id == id).first()
         if _group is None:
-            raise ValueError(f"Group with id {data.id} not found")
+            raise ValueError(f"Group with id {id} not found")
         # update with group input
-        self.session.commit()
+        
+        self.db.query(GroupEntity).filter(GroupEntity.id == id).update({k: v for k, v in group.model_dump().items()})
+        self.db.commit()
         return _group
     
     def add(self, input: GroupInput) -> GroupEntity:
-        self.session.add(input)
-        self.session.commit()
-        return self.read(data=GroupPick(id=input.id))
+        group_new = GroupEntity(**input.model_dump())
+        self.db.add(group_new)
+        self.db.commit()
+        # Actualiza la instancia con el ID generado por la BD
+        self.db.refresh(group_new)  
+        return group_new
     
-    def delete(self, data: GroupPick) -> None:
-        group = self.session.query(GroupEntity).filter(GroupEntity.id == data.id).first()
-        self.session.delete(group)
-        self.session.commit()
+    def delete(self, id: int) -> None:
+        group = self.db.query(GroupEntity).filter(GroupEntity.id == id).first()
+        if group is None:
+            raise ValueError(f"Group with id {id} not found")
+        # delete at the end of the session
+        self.db.query(GroupEntity).filter(GroupEntity.id == id).update({"deleted_at": datetime.datetime.now()})
+        self.db.commit()

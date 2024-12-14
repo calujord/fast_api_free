@@ -1,10 +1,9 @@
 import abc
 from sqlalchemy import Column, DateTime, Integer
 import datetime
-from sqlalchemy.orm import declarative_base, declared_attr
+from sqlalchemy.orm import declared_attr
 
 
-Base = declarative_base()
 class BaseEntity:
     __abstract__ = True
 

@@ -6,8 +6,6 @@ from infrastructure.entities.base import BaseEntity
 
 T = TypeVar('T', bound='BaseEntity')
 
-class BaseDomain(pydantic.BaseModel):
+class BaseDomain:
     entity: BaseEntity
 
-    class Config:
-        arbitrary_types_allowed = True

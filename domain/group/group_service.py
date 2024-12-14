@@ -1,34 +1,47 @@
 
-from dto.base.pagination import FilterBase, ListDomainResponse
+from core.service import ServiceBase
+from domain.group.group_domain import GroupDomain
+from dto.base.pagination import FilterBase, ListDomainResponse, PaginationResponse
 from sqlalchemy.orm import Session
+from infrastructure.entities.group import GroupEntity
 from infrastructure.repositories.group import GroupRepository
-from fastapi import Depends
-from typing import TYPE_CHECKING
 from dto.group.group_pick import GroupPick
 from dto.group.group_input import GroupInput
 
-# REMOVE CIRCULAR DEPENDENCY
-if TYPE_CHECKING:
-    from domain.group.group_domain import GroupDomain
+class GroupFactory:
+    def __init__(self, service: 'GroupService'):
+        self.service = service
+    
+    def to_domain(self, entity: GroupEntity) -> 'GroupDomain':
+        return GroupDomain(entity, self.service.session)
+    
+    def to_domains(self, response: PaginationResponse[GroupEntity]) -> ListDomainResponse['GroupDomain']:
+        return ListDomainResponse[GroupDomain](
+            items=[self.to_domain(entity) for entity in response.items],
+            total=response.total,
+            page=response.page,
+            limit=response.limit
+        )
 
-class GroupService:
+
+class GroupService(ServiceBase):
+    
     def __init__(self, session: Session):
+        super().__init__(session)
         self.repository: GroupRepository = GroupRepository(session)
     
     def browse(self, filter: FilterBase) -> ListDomainResponse['GroupDomain']:
-        result = self.repository.browse(filter=filter)
-        items = [GroupDomain.factory(item) for item in result.items]
-        return ListDomainResponse[GroupDomain](items=items, total=result.total, page=filter.page, limit=filter.limit)
+        return GroupFactory(self).to_domains(self.repository.browse(filter))
     
-    def read(self, data: GroupPick) -> 'GroupDomain':
-        return GroupDomain.factory(self.repository.read(data))
+    def read(self, id: int) -> GroupDomain:
+        return GroupFactory(self).to_domain(self.repository.read(id))
     
-    def edit(self, data: GroupPick, group: GroupInput) -> 'GroupDomain':
-        return GroupDomain.factory(self.repository.edit(data, group))
+    def edit(self, id: int, group: GroupInput) -> GroupDomain:
+        return GroupFactory(self).to_domain(self.repository.edit(id, group))
     
-    def add(self, data: GroupInput) -> 'GroupDomain':
-        return GroupDomain.factory(self.repository.add(data))
+    def add(self, data: GroupInput) -> GroupDomain:
+        return GroupFactory(self).to_domain(self.repository.add(data))
     
-    def delete(self, data: GroupPick) -> None:
-        return self.repository.delete(data)
+    def delete(self, id: int) -> None:
+        self.repository.delete(id)
     

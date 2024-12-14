@@ -1,3 +1,4 @@
+from typing import Type
 from domain.group.group_service import GroupService
 # session
 from sqlalchemy.orm import Session
@@ -5,5 +6,5 @@ from sqlalchemy.orm import Session
 class AccessDomain:
     
     def __init__(self, session: Session):
-        self.service = GroupService(session=session)
+        self.group = GroupService(session=session)
     
