@@ -16,9 +16,11 @@ from lib.decorator import api, get, post, put, tags, delete
 class Group(Controller):
 
     @get("/")
-    async def browse(self, filter: FilterBase = Depends()) -> OutputResponse:
+    async def browse(
+        self, filter: FilterBase = Depends()
+    ) -> OutputResponse[GroupOutput]:
         result = AccessDomain(session=self.session).group.browse(filter=filter)
-        return OutputResponse["GroupOutput"](
+        return OutputResponse[GroupOutput](
             items=[domain.entity for domain in result.items],
             total=result.total,
             page=result.page,

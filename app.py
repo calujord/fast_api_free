@@ -1,10 +1,17 @@
 # database.py
 
+from fastapi.exceptions import RequestValidationError
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from typing import Type
 from fastapi import FastAPI, Request, Response
+from core.middleware.bad_request import (
+    ExceptionMiddleware,
+    validation_exception_handler,
+    validation_unique_handler,
+)
+from sqlalchemy.exc import PendingRollbackError
 from infrastructure.database.settings import BaseModelEntity
 
 from core.controller import Controller
@@ -58,3 +65,13 @@ class MainApi(FastAPI):
             finally:
                 request.state.db.close()
             return response
+
+        self.add_exception_handler(
+            RequestValidationError,
+            validation_exception_handler,
+        )
+        self.add_exception_handler(
+            PendingRollbackError,
+            validation_unique_handler,
+        )
+        self.add_middleware(ExceptionMiddleware)

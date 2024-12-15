@@ -1,14 +1,7 @@
-from fastapi.exceptions import RequestValidationError
 from app import MainApi
 from controllers.group import Group
 from controllers.user import User
 import logging
-from core.middleware.bad_request import (
-    ExceptionMiddleware,
-    validation_exception_handler,
-    validation_unique_handler,
-)
-from sqlalchemy.exc import PendingRollbackError
 
 
 # Configurar el registro
@@ -32,9 +25,7 @@ app.add_controllers([User, Group])
 
 
 # Add the middleware class, not an instance
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
-app.add_exception_handler(PendingRollbackError, validation_unique_handler)
-app.add_middleware(ExceptionMiddleware)
+app.setup_middleware()
 
 # Construir la aplicación
 logger.info("Building app...")
