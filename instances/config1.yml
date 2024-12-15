@@ -1,0 +1,7 @@
+database:
+  connection_string: "sqlite:///./test.db"
+swagger:
+  title: "Fast api crud 1"
+  description: "Fast API crud example"
+  version: "0.1.0"
+port: 8080
