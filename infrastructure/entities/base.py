@@ -1,5 +1,4 @@
-import abc
-from sqlalchemy import Column, DateTime, Integer
+from sqlalchemy import Boolean, Column, DateTime, Integer
 import datetime
 from sqlalchemy.orm import declared_attr
 
@@ -14,4 +13,9 @@ class BaseEntity:
     id = Column(Integer, primary_key=True, index=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow)
-    deleted_at = Column(DateTime, nullable=True)
+    deleted_at = Column(DateTime, nullable=True, default=None)
+    is_active = Column(Boolean, default=True)
+
+    def delete(self):
+        self.deleted_at = datetime.datetime.utcnow()
+        self.is_active = False

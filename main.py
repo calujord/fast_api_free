@@ -13,10 +13,7 @@ app = MainApi()
 
 # Agregar controladores
 logger.info("Adding controllers...")
-app.add_controllers([
-    User,
-    Group
-])
+app.add_controllers([User, Group])
 
 # Construir la aplicación
 logger.info("Building app...")
@@ -24,5 +21,6 @@ app.build()
 
 if __name__ == "__main__":
     import uvicorn
+
     logger.info("Starting server...")
     uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=False)
