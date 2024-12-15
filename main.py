@@ -4,6 +4,7 @@ from controllers.group import Group
 from controllers.user import User
 import logging
 from core.middleware.bad_request import (
+    ExceptionMiddleware,
     validation_exception_handler,
     validation_unique_handler,
 )
@@ -16,7 +17,14 @@ logger = logging.getLogger(__name__)
 
 # Crear instancia de la aplicación
 logger.info("Creating app instance...")
-app = MainApi()
+app = MainApi(
+    settings={
+        "title": "FastAPI CRUD",
+        "description": "FastAPI CRUD example",
+        "version": "0.1.0",
+    },
+    querystring="sqlite:///./test.db",
+)
 
 # Agregar controladores
 logger.info("Adding controllers...")
@@ -24,12 +32,14 @@ app.add_controllers([User, Group])
 
 
 # Add the middleware class, not an instance
-# app.add_exception_handler(RequestValidationError, validation_exception_handler)
-# app.add_exception_handler(PendingRollbackError, validation_unique_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(PendingRollbackError, validation_unique_handler)
+app.add_middleware(ExceptionMiddleware)
 
 # Construir la aplicación
 logger.info("Building app...")
-app.build()
+app.setup_routes()
+app.setup_middleware()
 
 if __name__ == "__main__":
     import uvicorn

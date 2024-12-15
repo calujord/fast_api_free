@@ -1,4 +1,4 @@
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from core.controller import Controller
 from domain.access_domain import AccessDomain
 from dto.base.pagination import OutputResponse
@@ -50,12 +50,16 @@ class User(Controller):
 
     @post("/")
     async def add(self, data: UserInput) -> UserOutput:
-        return (
-            AccessDomain(session=self.session)
-            .group.read(data.group_id)
-            .user.add(data)
-            .entity
-        )
+        try:
+            return (
+                AccessDomain(session=self.session)
+                .group.read(data.group_id)
+                .user.add(data)
+                .entity
+            )
+        except Exception as e:
+            print(e)
+            raise HTTPException(status_code=400, detail=str(e))
 
     @delete("/{id}")
     async def delete(self, pick: UserPick = Depends()) -> None:

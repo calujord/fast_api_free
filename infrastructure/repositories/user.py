@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 import datetime
+import logging
+from sqlalchemy.exc import IntegrityError
 
 from dto.base.pagination import PaginationResponse
 from dto.user.user_filter import UserFilter
@@ -8,6 +10,8 @@ from infrastructure.entities.user import UserEntity
 from sqlalchemy.orm import Session
 
 from sqlalchemy import or_
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -88,12 +92,18 @@ class UserRepository:
         return _user
 
     def add(self, input: UserInput) -> UserEntity:
-        user_new = UserEntity(**input.model_dump())
-        self.db.add(user_new)
-        self.db.commit()
-        # Actualiza la instancia con el ID generado por la BD
-        self.db.refresh(user_new)
-        return user_new
+
+        try:
+            user_new = UserEntity(**input.model_dump())
+            self.db.add(user_new)
+            self.db.commit()
+            # Actualiza la instancia con el ID generado por la BD
+            self.db.refresh(user_new)
+            return user_new
+        except IntegrityError as integrity_error:
+            self.db.rollback()
+            logger.error(f"Error adding user: {integrity_error}")
+            raise ValueError(f"User with email {input.email} already exists")
 
     def delete(self, id: int) -> None:
         user = self.db.query(UserEntity).filter(UserEntity.id == id).first()
