@@ -8,6 +8,7 @@ class BaseOutput(BaseModel):
     created_at: datetime.datetime
     updated_at: datetime.datetime
     deleted_at: Optional[datetime.datetime] = None
+    is_active: bool
 
     class Config:
         orm_mode = True

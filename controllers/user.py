@@ -23,12 +23,7 @@ class User(Controller):
             .user.browse(filter)
         )
         return OutputResponse[UserOutput](
-            items=[
-                UserOutput.from_orm(
-                    domain.entity,
-                )
-                for domain in result.items
-            ],
+            items=[domain.entity for domain in result.items],
             total=result.total,
             page=result.page,
             limit=result.limit,
@@ -46,23 +41,21 @@ class User(Controller):
 
     @put("/{id}")
     async def edit(self, id: int, data: UserInput) -> UserOutput:
-        entity = (
+        return (
             AccessDomain(session=self.session)
             .group.read(data.group_id)
             .user.edit(id, data)
             .entity
         )
-        return UserOutput.from_orm(entity)
 
     @post("/")
     async def add(self, data: UserInput) -> UserOutput:
-        entity = (
+        return (
             AccessDomain(session=self.session)
             .group.read(data.group_id)
             .user.add(data)
             .entity
         )
-        return UserOutput.from_orm(entity)
 
     @delete("/{id}")
     async def delete(self, pick: UserPick = Depends()) -> None:

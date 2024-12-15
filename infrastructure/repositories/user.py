@@ -104,3 +104,26 @@ class UserRepository:
             {"deleted_at": datetime.datetime.now(), "is_active": False}
         )
         self.db.commit()
+
+    def get_by_email(self, email: str) -> UserEntity:
+        """
+        Retrieve a user by its email.
+        Args:
+            email (str): The email of the user to retrieve.
+        Returns:
+            User: The user object if found.
+        Raises:
+            ValueError: If no user with the specified email is found.
+        """
+
+        user = (
+            self.db.query(UserEntity)
+            .filter(
+                UserEntity.email == email,
+                UserEntity.is_active,
+            )
+            .first()
+        )
+        if user is None:
+            raise ValueError(f"User with email {email} not found")
+        return user

@@ -46,3 +46,6 @@ class UserService(ServiceBase):
 
     def delete(self, id: int) -> None:
         self.repository.delete(id)
+
+    def read_by_email(self, email: str) -> UserDomain:
+        return UserFactory(self).to_domain(self.repository.get_by_email(email))
