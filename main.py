@@ -1,45 +1,38 @@
-from fastapi.exceptions import RequestValidationError
 from app import MainApi
 from controllers.group import Group
 from controllers.user import User
 import logging
-from core.middleware.bad_request import (
-    ExceptionMiddleware,
-    validation_exception_handler,
-    validation_unique_handler,
-)
-from sqlalchemy.exc import PendingRollbackError
-
 
 # Configurar el registro
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Crear instancia de la aplicación
 logger.info("Creating app instance...")
-app = MainApi(
-    settings={
-        "title": "FastAPI CRUD",
-        "description": "FastAPI CRUD example",
-        "version": "0.1.0",
-    },
-    querystring="sqlite:///./test.db",
-)
+try:
+    app = MainApi(setup="instances/config2.yml")
+    logger.info("App instance created successfully.")
+except Exception as e:
+    logger.error(f"Failed to create app instance: {e}")
+    raise
 
-# Agregar controladores
-logger.info("Adding controllers...")
-app.add_controllers([User, Group])
+try:
+    logger.info("Adding controllers...")
+    app.add_controllers([User, Group])
+    logger.info("Controllers added successfully.")
+except Exception as e:
+    logger.error(f"Failed to add controllers: {e}")
+    raise
 
+try:
+    logger.info("Setting up the app...")
+    app.setup()
+    logger.info("App setup completed successfully.")
+except Exception as e:
+    logger.error(f"Failed to set up the app: {e}")
+    raise
 
-# Add the middleware class, not an instance
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
-app.add_exception_handler(PendingRollbackError, validation_unique_handler)
-app.add_middleware(ExceptionMiddleware)
-
-# Construir la aplicación
-logger.info("Building app...")
-app.setup_routes()
-app.setup_middleware()
+# Enable Swagger documentation
+app = MainApi(setup="instances/config2.yml")
 
 if __name__ == "__main__":
     import uvicorn

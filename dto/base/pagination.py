@@ -34,6 +34,22 @@ class PaginationResponse(PaginationBase, Generic[T]):
 class OutputResponse(PaginationBase, Generic[D]):
     items: List[D]
 
+    @classmethod
+    def model_rebuild(
+        cls,
+        *,
+        force=False,
+        raise_errors=True,
+        _parent_namespace_depth=2,
+        _types_namespace=None
+    ):
+        return super().model_rebuild(
+            force=force,
+            raise_errors=raise_errors,
+            _parent_namespace_depth=_parent_namespace_depth,
+            _types_namespace=_types_namespace,
+        )
+
 
 class ListDomainResponse(PaginationBase, Generic[BD]):
     items: List[BD]
